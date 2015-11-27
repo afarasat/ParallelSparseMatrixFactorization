@@ -218,7 +218,7 @@ double solution::updateWij(const int & index_i, const int  & index_k, const doub
 	//cout << "DeltaF_w: " << delF << endl;
 	//#pragma omp critical
 	_W[index_i*_K+index_k] =(_W[index_i*_K+index_k]-stepSize*delF) < 0 ? 0 : (_W[index_i*_K+index_k]-stepSize*delF);
-	_W[index_i*_K+index_k] = _W[index_i*_K+index_k] > 500 ? 5 * ((double) rand() / (RAND_MAX)) : _W[index_i*_K+index_k];
+	_W[index_i*_K+index_k] = _W[index_i*_K+index_k] > 50 ? 5 * ((double) rand() / (RAND_MAX)) : _W[index_i*_K+index_k];
 	//std::cout <<"W[i,j]: " << _W[index_i*_K+index_k] << std::endl;
 	return _W[index_i*_K+index_k];
 }
@@ -247,7 +247,7 @@ double solution::updateCij(const int & index_k, const int & index_j, const doubl
 	//cout << "DeltaF_w: " << delF << endl;
 	
 	_C[index_k*_N+index_j] = (1/(1+gamma*stepSize))*(_C[index_k*_N+index_j]-stepSize*delF);
-	_C[index_k*_N+index_j] =_C[index_k*_N+index_j] > 500 ? 2 * ((double) rand() / (RAND_MAX))-1 : _C[index_k*_N+index_j];
+	_C[index_k*_N+index_j] =_C[index_k*_N+index_j] > 50 ? 2 * ((double) rand() / (RAND_MAX))-1 : _C[index_k*_N+index_j];
 	//_C[index_k][index_j] = _C[index_k][index_j]-stepSize*delF;
 	// std::cout <<"C[i,j]: " << _C[index_k*_N+index_j] << std::endl;
 

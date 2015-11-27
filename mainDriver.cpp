@@ -59,6 +59,10 @@ int main(int argc, char* args[]) {
 	long currObj, bestObj;
 	double bestTime;
 	bool netFlix = false;
+	int bestITR [runMax];
+	long bestOBJ[runMax];
+	double bestTIME[runMax];
+	double totTIME[runMax];
 	if (netFlix){
 
 	}else{
@@ -152,6 +156,9 @@ int main(int argc, char* args[]) {
 				bestObj = currObj;
 				bestItr = currentIteration;
 				bestTime = omp_get_wtime();
+				bestITR[numRun] = bestItr;
+				bestOBJ[numRun] = bestObj;
+				bestTIME[numRun] = bestTime - timeStart;
 			}
 			stepSize /= 1.1;
 			mu = mu/1.1;
@@ -168,9 +175,14 @@ int main(int argc, char* args[]) {
 		myFile << "Best Objective Function: " << bestObj << "\t" << "Best Iteration: " << bestItr << "\t" << "Best Time" << bestTime-timeStart << std::endl;
 		myFile << "Num of Procs: " <<  NUM_PROCS  << "\t" << " Total time: " << timeEnd-timeStart << std::endl;
 		std::cout << "Num of Procs: " <<  NUM_PROCS  <<" Total time: " << timeEnd-timeStart << std::endl;
+		totTIME[numRun] = timeEnd-timeStart;
 		solutionObj.~solution();
 		W.erase(W.begin(),W.end());
 		C.erase(C.begin(),C.end());
+	}
+	myFile << "Best Objective Function" << "\t" << "Best Iteration" << "\t" << "Best Time" << "\t" << "Total Time"<< std::endl;
+	for (int i = 0; i < runMax; i++){
+		 myFile << bestOBJ[i]  << "\t" << bestITR[i] << "\t" << bestTIME[i] << "\t" << totTIME[i] << std::endl;
 	}
 	myFile.close();
 return -1;
