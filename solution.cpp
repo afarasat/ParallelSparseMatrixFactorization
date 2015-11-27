@@ -11,7 +11,7 @@
 #include <math.h>
 #include <omp.h>
 #include <time.h>
-#include <mkl.h>
+//#include <mkl.h>
 
 using namespace std;
 std::vector<double> _W;
@@ -69,7 +69,8 @@ solution::solution(int ** observation, int & num_proc, double & sparsityThreshol
 	std::cout<<"W and C initialized in "<<timeE-timeS<<" seconds"<<std::endl;
 }
 solution::~solution() {
-	// TODO Auto-generated destructor stub
+	_W.erase(_W.begin(),_W.end());
+	_C.erase(_C.begin(),_C.end());
 }
 std::vector<double> solution::getW(){
 	return _W;
