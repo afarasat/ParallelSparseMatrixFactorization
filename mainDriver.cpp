@@ -28,31 +28,34 @@ int main(int argc, char* args[]) {
 	// *****************************
 	// Parallel Setup
 	int NUM_PROCS, NUM_THREADS;
-	//NUM_PROCS = omp_get_num_procs(); // number of processes requested
-	NUM_PROCS = 4;
+	NUM_PROCS = omp_get_num_procs(); // number of processes requested
+	NUM_PROCS = 1;
 	//NUM_PROCS = (int)(args[0]);
+	int Q = 500;
+	int N =400;
+	int K = 10;
 	NUM_THREADS = NUM_PROCS;
 	omp_set_num_threads(NUM_THREADS); 
 	
 	// Parameters Setting
-	double mu (10.0); // This represent parameter of l2 regularization
-	double init_mu = mu;
-	double lambda (1.0); // This represent parameter of l1 regularization
-	double gamma (10.0); // This represent parameter of Frobenius norm
-	double init_gamma = gamma;
-	static int numOfIteration (2); // Number of Iteration of main optimization loop
-	double sparcityParameter = 0.05;
-	double stepSize (1000); // The stepsize in the optimization process 
-	double init_stepSize = stepSize;
+	float mu = 5.0; // This represent parameter of l2 regularization
+	float init_mu = mu;
+	float lambda = 1.0; // This represent parameter of l1 regularization
+	float gamma = 5.0; // This represent parameter of Frobenius norm
+	float init_gamma = gamma;
+	static int numOfIteration = 200; // Number of Iteration of main optimization loop
+	double sparcityParameter =0.05 ;
+	float stepSize = 20; // The stepsize in the optimization process 
+	float init_stepSize = stepSize;
 	// number of processes requested
+
 	
 	// Generating Random Indexes for whole otimization
 	
 	//*****************************
 	int ** data; // full data
-	int ** observation; // observation = data-missing values
-	int Q(2000),N(1000), K(10);
-	int runMax = 3;
+	int ** observation; // observation = data-missing value
+	int runMax = 1;
 	std::vector<double> W;
 	std::vector<double> C;
 	int bestItr;
@@ -81,20 +84,20 @@ int main(int argc, char* args[]) {
 	double timeS_Obj, timeE_Obj;
 	int numRun;
 	std::ofstream myFile;
-	myFile.open("ObjectiveFunctionValues.txt");
+	try{
+		myFile.open("Q"+std::to_string(Q)+"N"+std::to_string(N)+"K"+std::to_string(K)+".txt");
+	}
+	catch (exception& e){
+		std::cout << "c++11 is required to use std::to_string" << std::endl;
+	}
 	int currentIteration;
-	int counter;
-	
-	mu = 10.0; // This represent parameter of l2 regularization
-	init_mu = mu;
-	lambda = 1.0; // This represent parameter of l1 regularization
-	gamma=10.0; // This represent parameter of Frobenius norm
-	init_gamma = gamma;
-	numOfIteration = 2; // Number of Iteration of main optimization loop
-	sparcityParameter = 0.05;
-	stepSize = 1000; // The stepsize in the optimization process
+	int counter;	
 	cout<<"****************"<<" OBSERVATION "<<endl;
-	for (numRun; numRun < runMax; numRun++){
+	for (numRun = 0; numRun < runMax; numRun++){
+		
+		mu = init_mu ;
+        	gamma = init_gamma;
+        	stepSize = init_stepSize; // The stepsize in the optimization process
 		timeStart = omp_get_wtime();
 		#pragma omp parallel shared(I_index,K_index,J_index,numOfIteration,NUM_PROCS)
 		{
@@ -113,11 +116,12 @@ int main(int argc, char* args[]) {
 		timeS_Obj = omp_get_wtime();
 		currObj =  solutionObj.objectiveFunction(lambda, mu,gamma);
 		myFile << "Run: " << numRun << std::endl;
-		myFile << "Iteration" << "\t" << "Obkective Function" << std::endl;
+		myFile << "Iteration" << "\t" << "Objective Function" << std::endl;
 		myFile << "Initial Value" << "\t" << currObj << std::endl;
 		cout << "Objective function: " << currObj << endl;
 		bestObj = currObj;
 		bestItr = 0;
+		bestTime = timeStart;
 		timeE_Obj = omp_get_wtime();
 		std::cout << "Time Objective Function: " << timeE_Obj - timeS_Obj <<  std::endl;
 		cout<<"****************"<<" Optimization Started..."<<endl;
@@ -143,12 +147,13 @@ int main(int argc, char* args[]) {
 			
 				W[iW*K+kW] = solutionObj.updateWij(iW,kW,mu,stepSize);
 				//W[iW]  = solutionObj.updateRowWij(iW,mu,stepSize);
-				kC = kW; jC = (rand() % (N));
+				kC = kW; //jC = (rand() % (N));
 				C[kC*N+jC] = solutionObj.updateCij(kC,jC,gamma,stepSize);
 				//C[jC] = solutionObj.updateColumnCij(jC,gamma,stepSize);
 				//cout << "C[i][j]: " << C[kC][jC] << endl;
 			//}
 			}
+			//#pragma omp barrier	
 			currObj = solutionObj.objectiveFunction(lambda, mu,gamma);
 			myFile << currentIteration  << "\t" << currObj << std::endl;
 			cout << "Iteration: " << currentIteration << ", Objective function: " << currObj << endl;
@@ -160,17 +165,22 @@ int main(int argc, char* args[]) {
 				bestOBJ[numRun] = bestObj;
 				bestTIME[numRun] = bestTime - timeStart;
 			}
+			
 			stepSize /= 1.1;
-			mu = mu/1.1;
-			gamma = gamma/1.1;
-			if(currentIteration % 10 == 0 && currentIteration != 0 ){
-				stepSize = (double)(1/++counter) * init_stepSize;;
-				mu = (double)(1/++counter) * init_mu;;
-				gamma = (double)(1/++counter) * init_gamma;
+			mu = mu/1.05;
+			gamma = gamma/1.05;
+		
+			if(currentIteration % 200 == 0 && currentIteration != 0 ){
+				counter++;
+				stepSize = ((float)1/(float)counter) * init_stepSize;
+				mu = ((float)1/(float)counter) * init_mu;
+				gamma = ((float)1/(float)counter) * init_gamma;
 			} 
+		
 			currentIteration++;
+			
 		}
-
+		//std::cout << "mu:" << mu << " step:" << stepSize << "gamma:" << gamma << std::endl;
 		timeEnd =omp_get_wtime();
 		myFile << "Best Objective Function: " << bestObj << "\t" << "Best Iteration: " << bestItr << "\t" << "Best Time" << bestTime-timeStart << std::endl;
 		myFile << "Num of Procs: " <<  NUM_PROCS  << "\t" << " Total time: " << timeEnd-timeStart << std::endl;

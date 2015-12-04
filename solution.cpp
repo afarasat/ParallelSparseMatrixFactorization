@@ -45,8 +45,8 @@ solution::solution(int ** observation, int & num_proc, double & sparsityThreshol
 		for (i = 0; i < _Q; i++) {
 			for (j = 0; j < _K; j++) {
 				randt = ((double) rand() / (RAND_MAX));
-				if (randt < sparsityThreshold) {
-					_W[i*_K+j]= 5 * ((double) rand() / (RAND_MAX));
+				if (randt < 5*sparsityThreshold) {
+					_W[i*_K+j]= 10 * ((double) rand() / (RAND_MAX));
 				}else{
 					_W[i*_K+j]=0;
 				}
@@ -59,7 +59,7 @@ solution::solution(int ** observation, int & num_proc, double & sparsityThreshol
 	        #pragma omp parallel for shared(_C,_N,_K) private(n,m)
 		for (n = 0; n < _K; n++) {
 			for (m = 0; m < _N; m++) {
-				_C[n*_N+m]=2 * ((double) rand() / (RAND_MAX)) - 1;
+				_C[n*_N+m]=10 * ((double) rand() / (RAND_MAX)) - 1;
 			}
 	
 		}
@@ -217,8 +217,9 @@ double solution::updateWij(const int & index_i, const int  & index_k, const doub
 	delF = -sum + mu*_W[index_i*_K+index_k];
 	//cout << "DeltaF_w: " << delF << endl;
 	//#pragma omp critical
-	_W[index_i*_K+index_k] =(_W[index_i*_K+index_k]-stepSize*delF) < 0 ? 0 : (_W[index_i*_K+index_k]-stepSize*delF);
-	_W[index_i*_K+index_k] = _W[index_i*_K+index_k] > 50 ? 5 * ((double) rand() / (RAND_MAX)) : _W[index_i*_K+index_k];
+	 _W[index_i*_K+index_k] = (double) rand() / (RAND_MAX) < 0.1 ? 0 :  _W[index_i*_K+index_k];
+	_W[index_i*_K+index_k] =(_W[index_i*_K+index_k]-stepSize*delF) <= 0 ? 0 : (_W[index_i*_K+index_k]-stepSize*delF);
+	_W[index_i*_K+index_k] = _W[index_i*_K+index_k] >= 20 ? 0 : _W[index_i*_K+index_k];
 	//std::cout <<"W[i,j]: " << _W[index_i*_K+index_k] << std::endl;
 	return _W[index_i*_K+index_k];
 }
@@ -247,7 +248,9 @@ double solution::updateCij(const int & index_k, const int & index_j, const doubl
 	//cout << "DeltaF_w: " << delF << endl;
 	
 	_C[index_k*_N+index_j] = (1/(1+gamma*stepSize))*(_C[index_k*_N+index_j]-stepSize*delF);
-	_C[index_k*_N+index_j] =_C[index_k*_N+index_j] > 50 ? 2 * ((double) rand() / (RAND_MAX))-1 : _C[index_k*_N+index_j];
+	_C[index_k*_N+index_j] =_C[index_k*_N+index_j] > 20 ? 2 * ((double) rand() / (RAND_MAX))-1 : _C[index_k*_N+index_j];
+	 _C[index_k*_N+index_j] =_C[index_k*_N+index_j] < -20 ? 2 * ((double) rand() / (RAND_MAX))-1 : _C[index_k*_N+index_j];
+
 	//_C[index_k][index_j] = _C[index_k][index_j]-stepSize*delF;
 	// std::cout <<"C[i,j]: " << _C[index_k*_N+index_j] << std::endl;
 
