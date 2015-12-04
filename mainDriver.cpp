@@ -30,6 +30,7 @@ int main(int argc, char* args[]) {
 	int NUM_PROCS, NUM_THREADS;
 	//NUM_PROCS = omp_get_num_procs(); // number of processes requested
 	NUM_PROCS = atoi(args[4]);
+	int P = NUM_PROCS;
 	//NUM_PROCS = (int)(args[0]);
 	int Q = atoi(args[1]);
 	int N =atoi(args[2]);
@@ -86,7 +87,7 @@ int main(int argc, char* args[]) {
 	int numRun;
 	std::ofstream myFile;
 	try{
-		myFile.open("Results//Q"+std::to_string(Q)+"N"+std::to_string(N)+"K"+std::to_string(K)+".txt");
+		myFile.open("Results//Q"+std::to_string(Q)+"N"+std::to_string(N)+"K"+std::to_string(K)+"P"+std::to_string(P)+".txt");
 	}
 	catch (exception& e){
 		std::cout << "c++11 is required to use std::to_string" << std::endl;
