@@ -30,7 +30,7 @@ solution::solution(int ** observation, int & num_proc, double & sparsityThreshol
 	cout<<"Initializing  W and C ... " << '\n';
 	_Q = Q; _N = N; _K = K;
 	double seed, randt;
-        int i, j, m, n;
+        long i, j, m, n;
 	_W.resize(_Q*_K);
 	_C.resize(_K*_N);
 	omp_set_num_threads(num_Procs);
@@ -84,8 +84,8 @@ long solution::objectiveFunction (const double & lambda, const double & mu, cons
 	float WiCj;
 	int obs_ij;             //observation data
         double logesticFunc;    // = 1/1+exp(...)
-	int iter_1,iter_2,iter_3; 
-	int i,j,k;
+	long iter_1,iter_2,iter_3; 
+	long i,j,k;
 	omp_set_num_threads(num_Procs);
 	#pragma omp sections
 	{
@@ -196,7 +196,8 @@ double solution::updateWij(const int & index_i, const int  & index_k, const doub
 	double WikCkj (0.0);
 	double yipi[_N];
 	double sum (0.0);
-	int j, k;
+	long j, k;
+	int obs_ij;
 	omp_set_num_threads(num_Procs);
 	#pragma omp parallel for private(j,k,WikCkj,yipi) reduction (+:sum)	
 	for (j = 0; j < _N; j++){
@@ -204,8 +205,9 @@ double solution::updateWij(const int & index_i, const int  & index_k, const doub
 		for (k = 0; k < _K; k++){
 				WikCkj += _W[index_i*_K+k]*_C[j+k*_N];
 			}
-		if (_observation[index_i][j] != -1){
-			yipi[j] =_observation[index_i][j] - (1/(1+exp(-WikCkj)));
+		obs_ij=_observation[index_i][j];
+		if (obs_ij != -1){
+			yipi[j] =obs_ij - (1/(1+exp(-WikCkj)));
 		}else{
 			yipi[j] =(rand()%2) - (1/(1+exp(-WikCkj)));
 		}
@@ -228,7 +230,8 @@ double solution::updateCij(const int & index_k, const int & index_j, const doubl
 	double WikCkj (0.0);
 	double yipi[_Q];
 	double sum (0.0);
-	int j , k;
+	long j , k;
+	int obs_ij;
 	omp_set_num_threads(num_Procs);
         #pragma omp parallel for private(j,k,WikCkj,yipi) reduction (+:sum)
 	for (j = 0; j < _Q; j++){
@@ -236,8 +239,9 @@ double solution::updateCij(const int & index_k, const int & index_j, const doubl
 		for (k = 0; k < _K; k++){
 				WikCkj += _W[j*_K+k]*_C[index_j+k*_N];
 			}
-		if (_observation[j][index_j] != -1){
-			yipi[j] = _observation[j][index_j]-(1/(1+exp(-WikCkj)));
+		obs_ij=_observation[j][index_j];
+		if (obs_ij != -1){
+			yipi[j] =obs_ij-(1/(1+exp(-WikCkj)));
 		}else{
 			yipi[j] = (rand()%2)-(1/(1+exp(-WikCkj)));
 		}
