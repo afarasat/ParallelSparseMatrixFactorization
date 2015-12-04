@@ -28,24 +28,25 @@ int main(int argc, char* args[]) {
 	// *****************************
 	// Parallel Setup
 	int NUM_PROCS, NUM_THREADS;
-	NUM_PROCS = omp_get_num_procs(); // number of processes requested
-	NUM_PROCS = 1;
+	//NUM_PROCS = omp_get_num_procs(); // number of processes requested
+	NUM_PROCS = atoi(args[4]);
 	//NUM_PROCS = (int)(args[0]);
-	int Q = 500;
-	int N =400;
-	int K = 10;
+	int Q = atoi(args[1]);
+	int N =atoi(args[2]);
+	int K = atoi(args[3]);
+	int runMax = atoi(args[5]);
 	NUM_THREADS = NUM_PROCS;
 	omp_set_num_threads(NUM_THREADS); 
 	
 	// Parameters Setting
-	float mu = 5.0; // This represent parameter of l2 regularization
+	float mu = 1.0; // This represent parameter of l2 regularization
 	float init_mu = mu;
 	float lambda = 1.0; // This represent parameter of l1 regularization
-	float gamma = 5.0; // This represent parameter of Frobenius norm
+	float gamma = 1.0; // This represent parameter of Frobenius norm
 	float init_gamma = gamma;
-	static int numOfIteration = 200; // Number of Iteration of main optimization loop
+	static int numOfIteration = 2000; // Number of Iteration of main optimization loop
 	double sparcityParameter =0.05 ;
-	float stepSize = 20; // The stepsize in the optimization process 
+	float stepSize; // The stepsize in the optimization process 
 	float init_stepSize = stepSize;
 	// number of processes requested
 
@@ -55,17 +56,17 @@ int main(int argc, char* args[]) {
 	//*****************************
 	int ** data; // full data
 	int ** observation; // observation = data-missing value
-	int runMax = 1;
 	std::vector<double> W;
 	std::vector<double> C;
 	int bestItr;
-	long currObj, bestObj;
+	long currObj, bestObj, initObj;
 	double bestTime;
 	bool netFlix = false;
 	int bestITR [runMax];
 	long bestOBJ[runMax];
 	double bestTIME[runMax];
 	double totTIME[runMax];
+	long improvObj[runMax];
 	if (netFlix){
 
 	}else{
@@ -85,7 +86,7 @@ int main(int argc, char* args[]) {
 	int numRun;
 	std::ofstream myFile;
 	try{
-		myFile.open("Q"+std::to_string(Q)+"N"+std::to_string(N)+"K"+std::to_string(K)+".txt");
+		myFile.open("Results//Q"+std::to_string(Q)+"N"+std::to_string(N)+"K"+std::to_string(K)+".txt");
 	}
 	catch (exception& e){
 		std::cout << "c++11 is required to use std::to_string" << std::endl;
@@ -115,10 +116,11 @@ int main(int argc, char* args[]) {
 		C = solutionObj.getC();	
 		timeS_Obj = omp_get_wtime();
 		currObj =  solutionObj.objectiveFunction(lambda, mu,gamma);
+		initObj = currObj;
 		myFile << "Run: " << numRun << std::endl;
-		myFile << "Iteration" << "\t" << "Objective Function" << std::endl;
+		//myFile << "Iteration" << "\t" << "Objective Function" << std::endl;
 		myFile << "Initial Value" << "\t" << currObj << std::endl;
-		cout << "Objective function: " << currObj << endl;
+		//cout << "Objective function: " << currObj << endl;
 		bestObj = currObj;
 		bestItr = 0;
 		bestTime = timeStart;
@@ -126,6 +128,7 @@ int main(int argc, char* args[]) {
 		std::cout << "Time Objective Function: " << timeE_Obj - timeS_Obj <<  std::endl;
 		cout<<"****************"<<" Optimization Started..."<<endl;
 		currentIteration = 0;
+		stepSize = 2/(currentIteration+2);
 		counter = 1;
 		while (currentIteration < numOfIteration){
 			//NUM_PROCS = 1;
@@ -155,7 +158,7 @@ int main(int argc, char* args[]) {
 			}
 			//#pragma omp barrier	
 			currObj = solutionObj.objectiveFunction(lambda, mu,gamma);
-			myFile << currentIteration  << "\t" << currObj << std::endl;
+		//	myFile << currentIteration  << "\t" << currObj << std::endl;
 			cout << "Iteration: " << currentIteration << ", Objective function: " << currObj << endl;
 			if (currObj < bestObj){
 				bestObj = currObj;
@@ -164,19 +167,20 @@ int main(int argc, char* args[]) {
 				bestITR[numRun] = bestItr;
 				bestOBJ[numRun] = bestObj;
 				bestTIME[numRun] = bestTime - timeStart;
+				improvObj[numRun] = bestObj - initObj;
 			}
-			
-			stepSize /= 1.1;
-			mu = mu/1.05;
-			gamma = gamma/1.05;
-		
+			stepSize = 2/(currentIteration+2);	
+		//	stepSize /= 1.1;
+		//	mu = mu/1.05;
+		//	gamma = gamma/1.05;
+			/*
 			if(currentIteration % 200 == 0 && currentIteration != 0 ){
 				counter++;
 				stepSize = ((float)1/(float)counter) * init_stepSize;
 				mu = ((float)1/(float)counter) * init_mu;
 				gamma = ((float)1/(float)counter) * init_gamma;
 			} 
-		
+			*/
 			currentIteration++;
 			
 		}
@@ -190,10 +194,22 @@ int main(int argc, char* args[]) {
 		W.erase(W.begin(),W.end());
 		C.erase(C.begin(),C.end());
 	}
-	myFile << "Best Objective Function" << "\t" << "Best Iteration" << "\t" << "Best Time" << "\t" << "Total Time"<< std::endl;
+	double sumBestOBJ = 0.0;
+	double sumbestTime = 0.0;
+	double sumTotTIME = 0.0;
+	int sumBestITR = 0;
+	double sumImprov = 0.0;
+	myFile << "Best Objective Function" << "\t" << "Best Iteration" << "\t" << "Best Time" << "\t" << "Total Time"<< "\t" << "Improvement" << std::endl;
 	for (int i = 0; i < runMax; i++){
-		 myFile << bestOBJ[i]  << "\t" << bestITR[i] << "\t" << bestTIME[i] << "\t" << totTIME[i] << std::endl;
+		sumBestOBJ +=  bestOBJ[i];
+		sumBestITR +=  bestITR[i];
+		sumbestTime += bestTIME[i];
+		sumTotTIME += totTIME[i];
+		sumImprov += improvObj[i]; 
+		myFile << bestOBJ[i]  << "\t" << bestITR[i] << "\t" << bestTIME[i] << "\t" << totTIME[i] << "\t" << improvObj[i] << std::endl;
 	}
+	myFile << "Average Objective Function" << "\t" << "Average Iteration" << "\t" << "Average Best Time" << "\t" << "Average Total Time"<< "\t"<<"Average Improvement"<< std::endl;
+	myFile <<(float) sumBestOBJ/(float)runMax  << "\t" <<(float)sumBestITR/(float)runMax << "\t" << (float)sumbestTime/(float)runMax << "\t" << (float)sumTotTIME/(float)runMax << "\t"<<(float)sumImprov/(float)runMax <<std::endl;
 	myFile.close();
 return -1;
 }

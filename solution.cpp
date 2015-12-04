@@ -103,7 +103,8 @@ long solution::objectiveFunction (const double & lambda, const double & mu, cons
 				}
 				logesticFunc=1/(1+exp(-WiCj));
 				//logesticFunc =1/(1+ veExp(-WiCj));
-				sumLog += obs_ij*log(0.01+logesticFunc) + (1-obs_ij)*log(1.01-logesticFunc);
+				
+				sumLog += ((obs_ij) ? log(0.01+logesticFunc) : log(1.01-logesticFunc));
 			}
 		}
 	}
@@ -130,14 +131,13 @@ long solution::objectiveFunction (const double & lambda, const double & mu, cons
 	}
 	}	
 	}
-	/* 
+	/*
 	//Print elements of the objective function
         std::cout << "SumLog: " << sumLog<<std::endl;
 	std::cout << "SumWl1: " << sumWl1<<std::endl;
         std::cout << "SumWl2: " << sumWl2<<std::endl;
-        std::cout << "SumC: " << sumC<<std::endl;
+        std::cout << "SumC: " << sqrt(sumC)<<std::endl;
 	*/
-
 
 	objectiveFunction = -sumLog + lambda*sumWl1 + mu*sumWl2 + gamma*sqrt(sumC);
 	return objectiveFunction;
@@ -256,6 +256,7 @@ double solution::updateCij(const int & index_k, const int & index_j, const doubl
 
 	return _C[index_k*_N+index_j];
 }
+
 /*
  *
 

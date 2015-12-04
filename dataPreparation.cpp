@@ -21,8 +21,8 @@ using namespace std;
 
 dataPreparation::dataPreparation(int a, int b, int c) {
 	_Q = a, _N = b, _K =c;
-	_dataThresold = 0.5;
-	_obsThresold = 0.5;
+	_dataThresold = 0.05;
+	_obsThresold = 0.8;
 	_Y = new int *[_Q];
 	for (int k = 0; k < _Q; k++){
 		_Y[k] = new int[_N];

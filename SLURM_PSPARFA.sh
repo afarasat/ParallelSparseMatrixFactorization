@@ -42,7 +42,12 @@ NPROCS=`cat $SLURM_NODEFILE | wc -l`
 
 # set intel-mpi environment variables
 # turn debugging up a bit
-export OMP_NUM_THREADS=8
+P = 8 ## number of processors
+_Q = 5 
+_N = 4
+_K = 2
+runMax = 30;
+export OMP_NUM_THREADS = $P
 
 
 # launch mainDriver.cpp
@@ -50,7 +55,8 @@ export OMP_NUM_THREADS=8
 echo "Launching .."
 module list 
 ##srun -n $NPROCS mainDriver.cpp
-srun ./test
+srun  icc -openmp -o3 -std=c++11 mainDriver.cpp solution.cpp dataPreparation.cpp -o test
+srun ./test $_Q $_N $_K $P $runMax
 echo "All Done!"
 
 echo "End Time = "`date`
